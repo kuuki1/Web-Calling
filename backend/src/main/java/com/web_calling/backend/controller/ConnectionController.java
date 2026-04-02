@@ -26,8 +26,8 @@ public class ConnectionController {
         Map<String, Object> response = new HashMap<>();
 
         // normalize input
-        from = normalize(from);
-        to = normalize(to);
+        // from = normalize(from);
+        // to = normalize(to);
 
         // build graph
         Map<Long, List<Long>> graph = graphService.buildGraph();
@@ -62,7 +62,7 @@ public class ConnectionController {
         return response;
     }
 
-    private String normalize(String name) {
-        return name.trim().toLowerCase().replace(" ", "_");
-    }
+    // private String normalize(String name) {
+    //     return name.trim().toLowerCase().replace(" ", "_");
+    // }
 }
