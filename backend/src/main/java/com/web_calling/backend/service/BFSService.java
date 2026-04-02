@@ -9,6 +9,11 @@ public class BFSService {
 
     public List<String> bfs(String start, String target, Map<String, List<String>> graph) {
 
+        // Nếu start hoặc target không tồn tại trong graph
+        if (!graph.containsKey(start) || !graph.containsKey(target)) {
+            return new ArrayList<>();
+        }
+
         Queue<String> queue = new LinkedList<>();
         Set<String> visited = new HashSet<>();
         Map<String, String> parent = new HashMap<>();
@@ -19,7 +24,10 @@ public class BFSService {
         while (!queue.isEmpty()) {
             String current = queue.poll();
 
-            if (current.equals(target)) break;
+            // Nếu tìm thấy target thì dừng
+            if (current.equals(target)) {
+                break;
+            }
 
             for (String neighbor : graph.getOrDefault(current, new ArrayList<>())) {
                 if (!visited.contains(neighbor)) {
@@ -30,7 +38,12 @@ public class BFSService {
             }
         }
 
-        // build path
+        // Nếu không tìm thấy đường đi
+        if (!parent.containsKey(target) && !start.equals(target)) {
+            return new ArrayList<>();
+        }
+
+        // Build path từ target → start
         List<String> path = new ArrayList<>();
         String step = target;
 
@@ -40,6 +53,7 @@ public class BFSService {
         }
 
         Collections.reverse(path);
+
         return path;
     }
 }
