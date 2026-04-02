@@ -25,21 +25,44 @@ public class ConnectionController {
 
         Map<String, Object> response = new HashMap<>();
 
-        // Build graph từ DB
-        Map<String, List<String>> graph = graphService.buildGraph();
+        // normalize input
+        from = normalize(from);
+        to = normalize(to);
 
-        // Chạy BFS
-        List<String> path = bfsService.bfs(from, to, graph);
+        // build graph
+        Map<Long, List<Long>> graph = graphService.buildGraph();
 
-        if (path.isEmpty()) {
+        Long startId = graphService.getIdByName(from);
+        Long targetId = graphService.getIdByName(to);
+
+        if (startId == null || targetId == null) {
+            response.put("message", "Person not found");
+            response.put("path", new ArrayList<>());
+            response.put("distance", -1);
+            return response;
+        }
+
+        List<Long> pathIds = bfsService.bfs(startId, targetId, graph);
+
+        if (pathIds.isEmpty()) {
             response.put("message", "No connection found");
             response.put("path", new ArrayList<>());
             response.put("distance", -1);
         } else {
-            response.put("path", path);
-            response.put("distance", path.size() - 1);
+            List<String> pathNames = new ArrayList<>();
+
+            for (Long id : pathIds) {
+                pathNames.add(graphService.getNameById(id));
+            }
+
+            response.put("path", pathNames);
+            response.put("distance", pathNames.size() - 1);
         }
 
         return response;
+    }
+
+    private String normalize(String name) {
+        return name.trim().toLowerCase().replace(" ", "_");
     }
 }

@@ -1,6 +1,6 @@
 package com.web_calling.backend;
 
-import java.util.*;
+// import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import com.web_calling.backend.service.BFSService;
 import com.web_calling.backend.service.GraphService;
 
-import jakarta.annotation.PostConstruct;
+// import jakarta.annotation.PostConstruct;
 
 @SpringBootApplication
 public class BackendApplication {
@@ -24,20 +24,20 @@ public class BackendApplication {
 		SpringApplication.run(BackendApplication.class, args);
 	}
 
-	@PostConstruct
-	public void testGraph() {
-		Map<String, List<String>> graph = graphService.buildGraph();
-		System.out.println(graph);
-	}
+	// @PostConstruct
+	// public void testGraph() {
+	// 	Map<String, List<String>> graph = graphService.buildGraph();
+	// 	System.out.println(graph);
+	// }
 
-	@PostConstruct
-	public void testBFS() {
-		Map<String, List<String>> graph = graphService.buildGraph();
+	// @PostConstruct
+	// public void testBFS() {
+	// 	Map<String, List<String>> graph = graphService.buildGraph();
 
-		System.out.println("Graph: " + graph);
+	// 	System.out.println("Graph: " + graph);
 
-		List<String> path = bfsService.bfs("A", "D", graph);
+	// 	List<String> path = bfsService.bfs("A", "D", graph);
 
-		System.out.println("Path: " + path);
-	}
+	// 	System.out.println("Path: " + path);
+	// }
 }
