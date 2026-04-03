@@ -4,6 +4,7 @@ import com.web_calling.backend.entity.Person;
 import com.web_calling.backend.entity.Relationship;
 import com.web_calling.backend.repository.PersonRepository;
 import com.web_calling.backend.repository.RelationshipRepository;
+import com.web_calling.backend.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,28 +19,24 @@ public class GraphService {
     @Autowired
     private PersonRepository personRepo;
 
-    // cache graph
     private Map<Long, List<Long>> cachedGraph = new HashMap<>();
-
-    // cache id -> name
     private Map<Long, String> idToName = new HashMap<>();
-
-    // cache name -> id
     private Map<String, Long> nameToId = new HashMap<>();
 
     public Map<Long, List<Long>> buildGraph() {
 
-        if (!cachedGraph.isEmpty()) {
-            return cachedGraph;
-        }
+        cachedGraph.clear();
+        idToName.clear();
+        nameToId.clear();
 
         List<Relationship> relations = relationshipRepo.findAll();
         List<Person> persons = personRepo.findAll();
 
-        // build map id <-> name
         for (Person p : persons) {
-            idToName.put(p.getId(), p.getName());
-            nameToId.put(p.getName(), p.getId());
+            String normalized = StringUtils.normalize(p.getName());
+
+            idToName.put(p.getId(), p.getName()); // giữ nguyên để trả ra đẹp
+            nameToId.put(normalized, p.getId());
         }
 
         for (Relationship r : relations) {
@@ -54,7 +51,7 @@ public class GraphService {
     }
 
     public Long getIdByName(String name) {
-        return nameToId.get(name);
+        return nameToId.get(StringUtils.normalize(name));
     }
 
     public String getNameById(Long id) {

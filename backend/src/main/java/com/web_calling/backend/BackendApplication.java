@@ -7,7 +7,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.web_calling.backend.service.BFSService;
+import com.web_calling.backend.service.CrawlerService;
 import com.web_calling.backend.service.GraphService;
+
+import jakarta.annotation.PostConstruct;
 
 // import jakarta.annotation.PostConstruct;
 
@@ -19,6 +22,10 @@ public class BackendApplication {
 
 	@Autowired
 	BFSService bfsService;
+
+	@Autowired
+	CrawlerService crawlerService;
+
 
 	public static void main(String[] args) {
 		SpringApplication.run(BackendApplication.class, args);
@@ -40,4 +47,9 @@ public class BackendApplication {
 
 	// 	System.out.println("Path: " + path);
 	// }
+
+	@PostConstruct
+	public void testCrawl() {
+		crawlerService.crawlAndSave("Elon Musk");
+	}
 }

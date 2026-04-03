@@ -2,6 +2,7 @@ package com.web_calling.backend.controller;
 
 import com.web_calling.backend.service.BFSService;
 import com.web_calling.backend.service.GraphService;
+import com.web_calling.backend.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,15 +26,18 @@ public class ConnectionController {
 
         Map<String, Object> response = new HashMap<>();
 
-        // normalize input
-        // from = normalize(from);
-        // to = normalize(to);
+        from = StringUtils.normalize(from);
+        to = StringUtils.normalize(to);
 
-        // build graph
         Map<Long, List<Long>> graph = graphService.buildGraph();
 
         Long startId = graphService.getIdByName(from);
         Long targetId = graphService.getIdByName(to);
+
+        System.out.println("FROM: " + from);
+        System.out.println("TO: " + to);
+        System.out.println("START ID: " + startId);
+        System.out.println("TARGET ID: " + targetId);
 
         if (startId == null || targetId == null) {
             response.put("message", "Person not found");
@@ -61,8 +65,4 @@ public class ConnectionController {
 
         return response;
     }
-
-    // private String normalize(String name) {
-    //     return name.trim().toLowerCase().replace(" ", "_");
-    // }
 }
