@@ -48,8 +48,8 @@ public class BackendApplication {
 	// 	System.out.println("Path: " + path);
 	// }
 
-	@PostConstruct
-	public void testCrawl() {
-		crawlerService.crawlAndSave("Elon Musk");
-	}
+	// @PostConstruct
+	// public void testCrawl() {
+	// 	crawlerService.crawlMultiLevel("Elon Musk", 2);
+	// }
 }
