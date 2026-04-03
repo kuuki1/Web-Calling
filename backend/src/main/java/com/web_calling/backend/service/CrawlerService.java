@@ -5,6 +5,7 @@ import com.web_calling.backend.entity.Relationship;
 import com.web_calling.backend.repository.PersonRepository;
 import com.web_calling.backend.repository.RelationshipRepository;
 import com.web_calling.backend.util.StringUtils;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,17 +21,9 @@ public class CrawlerService {
     private PersonRepository personRepo;
 
     @Autowired
-    private RelationshipRepository relationshipRepo;
+    private RelationshipRepository relationRepo;
 
-    @Autowired
-    private GraphService graphService;
-
-    private Map<String, Person> personCache = new HashMap<>();
-    private Set<String> relationshipCache = new HashSet<>();
-
-    public void crawlMultiLevel(String startName, int maxDepth) {
-
-        startName = StringUtils.normalize(startName);
+    public void crawlAndSave(String startName, int maxDepth) {
 
         Queue<String> queue = new LinkedList<>();
         Set<String> visited = new HashSet<>();
@@ -38,97 +31,86 @@ public class CrawlerService {
         queue.add(startName);
         visited.add(startName);
 
-        int depth = 0;
+        int level = 0;
 
-        while (!queue.isEmpty() && depth < maxDepth) {
+        while (!queue.isEmpty() && level <= maxDepth) {
 
             int size = queue.size();
-
-            System.out.println("=== LEVEL " + depth + " ===");
+            System.out.println("=== LEVEL " + level + " ===");
 
             for (int i = 0; i < size; i++) {
 
                 String current = queue.poll();
 
+                String normalizedCurrent = StringUtils.normalize(current);
+
+                Person currentPerson = personRepo
+                        .findByName(normalizedCurrent)
+                        .orElseGet(() -> personRepo.save(createPerson(normalizedCurrent)));
+
                 List<String> links = wikiService.getLinks(current);
 
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
+                for (String link : links) {
 
-                Person main = findOrCreate(current);
+                    String normalizedLink = StringUtils.normalize(link);
 
-                int limit = Math.min(links.size(), 10);
+                    Person neighbor = personRepo
+                            .findByName(normalizedLink)
+                            .orElseGet(() -> personRepo.save(createPerson(normalizedLink)));
 
-                for (int j = 0; j < limit; j++) {
-
-                    String linkName = StringUtils.normalize(links.get(j));
-
-                    Person related = findOrCreate(linkName);
-
-                    if (!existsRelationship(main.getId(), related.getId())) {
-
-                        Relationship r = new Relationship();
-                        r.setPerson1Id(main.getId());
-                        r.setPerson2Id(related.getId());
-
-                        relationshipRepo.save(r);
-
-                        // cache relationship
-                        relationshipCache.add(main.getId() + "-" + related.getId());
+                    if (!relationshipExists(currentPerson.getId(), neighbor.getId())) {
+                        relationRepo.save(createRelation(currentPerson.getId(), neighbor.getId()));
                     }
 
-                    if (!visited.contains(linkName)) {
-                        queue.add(linkName);
-                        visited.add(linkName);
+                    if (!visited.contains(link)) {
+                        visited.add(link);
+                        queue.add(link);
                     }
                 }
             }
 
-            depth++;
+            level++;
         }
 
-        graphService.clearCache();
-
-        System.out.println("Multi-level crawl DONE");
+        System.out.println("Crawl DONE");
     }
 
-    private Person findOrCreate(String name) {
+    // ===== helper =====
 
-        if (personCache.containsKey(name)) {
-            return personCache.get(name);
+    private Person createPerson(String name) {
+        Person p = new Person();
+        try {
+            java.lang.reflect.Field field = Person.class.getDeclaredField("name");
+            field.setAccessible(true);
+            field.set(p, name);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        Person p = personRepo.findByName(name)
-                .orElseGet(() -> {
-                    Person newP = new Person();
-                    newP.setName(name);
-                    return personRepo.save(newP);
-                });
-
-        personCache.put(name, p);
-
         return p;
     }
 
-    private boolean existsRelationship(Long p1, Long p2) {
+    private Relationship createRelation(Long p1, Long p2) {
+        Relationship r = new Relationship();
+        try {
+            java.lang.reflect.Field f1 = Relationship.class.getDeclaredField("person1Id");
+            java.lang.reflect.Field f2 = Relationship.class.getDeclaredField("person2Id");
 
-        String key1 = p1 + "-" + p2;
-        String key2 = p2 + "-" + p1;
+            f1.setAccessible(true);
+            f2.setAccessible(true);
 
-        if (relationshipCache.contains(key1) || relationshipCache.contains(key2)) {
-            return true;
+            f1.set(r, p1);
+            f2.set(r, p2);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+        return r;
+    }
 
-        boolean exists = relationshipRepo.existsByPerson1IdAndPerson2Id(p1, p2)
-                || relationshipRepo.existsByPerson1IdAndPerson2Id(p2, p1);
-
-        if (exists) {
-            relationshipCache.add(key1);
-        }
-
-        return exists;
+    private boolean relationshipExists(Long p1, Long p2) {
+        return relationRepo.findAll().stream().anyMatch(r ->
+                (r.getPerson1Id().equals(p1) && r.getPerson2Id().equals(p2)) ||
+                (r.getPerson1Id().equals(p2) && r.getPerson2Id().equals(p1))
+        );
     }
 }

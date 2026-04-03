@@ -2,12 +2,15 @@ package com.web_calling.backend.controller;
 
 import com.web_calling.backend.service.BFSService;
 import com.web_calling.backend.service.GraphService;
+import com.web_calling.backend.service.CrawlerService;
 import com.web_calling.backend.util.StringUtils;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api")
 public class ConnectionController {
@@ -17,6 +20,9 @@ public class ConnectionController {
 
     @Autowired
     private BFSService bfsService;
+
+    @Autowired
+    private CrawlerService crawlerService;
 
     @GetMapping("/connection")
     public Map<String, Object> findConnection(
@@ -29,13 +35,19 @@ public class ConnectionController {
         from = StringUtils.normalize(from);
         to = StringUtils.normalize(to);
 
+        System.out.println("FROM: " + from);
+        System.out.println("TO: " + to);
+
+        crawlerService.crawlAndSave(from, 1);
+        crawlerService.crawlAndSave(to, 1);
+
+        graphService.clearCache();
+
         Map<Long, List<Long>> graph = graphService.buildGraph();
 
         Long startId = graphService.getIdByName(from);
         Long targetId = graphService.getIdByName(to);
 
-        System.out.println("FROM: " + from);
-        System.out.println("TO: " + to);
         System.out.println("START ID: " + startId);
         System.out.println("TARGET ID: " + targetId);
 
@@ -53,6 +65,7 @@ public class ConnectionController {
             response.put("path", new ArrayList<>());
             response.put("distance", -1);
         } else {
+
             List<String> pathNames = new ArrayList<>();
 
             for (Long id : pathIds) {
